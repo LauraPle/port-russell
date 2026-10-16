@@ -1,7 +1,10 @@
+require('dotenv').config();
+
 const express = require('express');
+const mongoose= require('mongoose');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 //permet de lire données JSON envoyées à l'API
 app.use(express.json());
@@ -11,7 +14,24 @@ app.get('/',(req,res,) => {
     res.send('Bienvenue au port de Plaisance de Russell');
 });
 
-//démarre le serveur
-app.listen(PORT, () => {
-    console.log(`Serveur démarré sur http://localhost:${PORT}`);
-});
+async function startServer(){
+    try{
+        if(!process.env.MONGODB_URI){
+            throw new Error('MONGODB_URI est absent du fichier.env');
+        }
+        await mongoose.connect(process.env.MONGODB_URI,{
+            dbName: 'port-russell'
+        });
+        console.log('Connexion à mongoDB réussie');
+
+        //démarre le serveur
+        app.listen(PORT, () => {
+            console.log(`Serveur démarré sut http://localhost:${PORT}`);
+        });
+    }catch(error){
+        console.error(`Erreur au démarrage:`, error.message);
+        process.exit(1);
+    }
+}
+
+startServer();
