@@ -2,8 +2,8 @@ require('dotenv').config();
 
 const mongoose= require('mongoose');
 
-const Catway = require('../models/Catway');
-const Reservation = require('../models/Reservation');
+const Catway = require('../models/catway');
+const Reservation = require('../models/reservation');
 
 const catways = require('../data/catways.json');
 const reservations = require('../data/reservations.json');
