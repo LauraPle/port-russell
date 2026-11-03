@@ -5,13 +5,14 @@ const mongoose= require('mongoose');
 const session= require('express-session');
 const {MongoStore} = require('connect-mongo');
 const authRoutes = require('./routes/auth');
+const CatwayRoutes = require('./routes/catways');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-//configure seessions
+//configure sessions
 app.use(session({
     name:'port-russell.sid',
     secret:process.env.SESSION_SECRET,
@@ -31,6 +32,7 @@ app.use(session({
 }));
 
 app.use('/', authRoutes);
+app.use('/catways', CatwayRoutes);
 
 //premiere route pour vérifier que le serveur fonctionne
 app.get('/',(req,res,) => {
