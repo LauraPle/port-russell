@@ -83,4 +83,67 @@ router.post('/', async (req, res, next) => {
   }
 });
 
+router.put('/:id', async (req,res,next) => {
+    try{
+        const catwayNumber = Number(req.params.id);
+        if(!Number.isSafeInteger(catwayNumber) || catwayNumber < 1){
+            return res.status(400).json({
+                message: 'Le numero du catway doit être un entier positif' 
+            });
+        }
+
+        const body = req.body || {};
+
+        if(Object.keys(body).some((key) => key !== 'catwayState')) {
+            return res.status(400).json({
+                message: 'Seul l etat du catway peut etre modifié'
+            });
+        }
+
+        if(
+            typeof body.catwayState !== 'string' ||
+            !body.catwayState.trim()
+        ){
+            return res.status(400).json({
+                message: 'La description de l etat est obligatoire'
+            });
+        }
+
+        const catway = await Catway.findOne({ catwayNumber});
+
+        if(!catway){
+            return res.status(404).json({
+                message: 'Catway introuvable'
+            });
+        }
+
+        catway.catwayState = body.catwayState.trim();
+        await catway.save();
+        return res.status(200).json(catway);
+    } catch(error) {
+        next(error);
+    }
+});
+
+router.delete('/:id', async (req,res, next) => {
+    try{
+        const catwayNumber = Number(req.params.id);
+        if(!Number.isSafeInteger(catwayNumber) || catwayNumber < 1){
+            return res.status(400).json({
+                message: 'Le numero du catway doit etre un entier positif'
+            });
+        }
+        const catway = await Catway.findOneAndDelete({ catwayNumber});
+
+        if(!catway){
+            return res.status(404).json({
+                message : "catway introuvable"
+            });
+        }
+        return res.status(204).send();
+    } catch (error){
+        next(error);
+    }
+});
+
 module.exports = router;
