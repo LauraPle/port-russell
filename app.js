@@ -1,9 +1,7 @@
 require('dotenv').config();
 
 const express = require('express');
-if (process.env.NODE_ENV === 'production') {
-  app.set('trust proxy', 1);
-}
+
 const mongoose= require('mongoose');
 const session= require('express-session');
 const {MongoStore} = require('connect-mongo');
@@ -15,6 +13,9 @@ const path = require('path');
 const pageRoutes = require('./routes/pages');
 
 const app = express();
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 const PORT = process.env.PORT || 3000;
