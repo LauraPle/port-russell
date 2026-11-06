@@ -47,6 +47,9 @@ router.post('/login', async (req,res,next) => {
                 if(error){
                     return next(error);
                 }
+                if (req.is('application/x-www-form-urlencoded')) {
+  return res.redirect(303, '/dashboard');
+}
                 return res.status(200).json({
                     message:'Connexion réussie',
                     user:{

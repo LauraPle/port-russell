@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestion des réservations — Port de Russell</title>
+</head>
+<body>
+  <header>
+    <h1>Gestion des réservations</h1>
+
+    <nav aria-label="Navigation">
+      <a href="/dashboard">Tableau de bord</a>
+      <a href="/logout">Se déconnecter</a>
+    </nav>
+  </header>
+
+  <main>
+    <h2>Créer une réservation</h2>
+
+<form id="create-reservation-form">
+  <div>
+    <label for="catwayNumber">Numéro du catway</label>
+    <input
+      type="number"
+      id="catwayNumber"
+      name="catwayNumber"
+      min="1"
+      step="1"
+      required
+    >
+  </div>
+
+  <div>
+    <label for="clientName">Nom du client</label>
+    <input type="text" id="clientName" name="clientName" required>
+  </div>
+
+  <div>
+    <label for="boatName">Nom du bateau</label>
+    <input type="text" id="boatName" name="boatName" required>
+  </div>
+
+  <div>
+    <label for="startDate">Début de la réservation</label>
+    <input
+      type="datetime-local"
+      id="startDate"
+      name="startDate"
+      required
+    >
+  </div>
+
+  <div>
+    <label for="endDate">Fin de la réservation</label>
+    <input
+      type="datetime-local"
+      id="endDate"
+      name="endDate"
+      required
+    >
+  </div>
+
+  <button type="submit">Créer la réservation</button>
+  <p id="create-message" role="status"></p>
+</form>
+    <h2>Liste des réservations</h2>
+
+    <% if (reservations.length === 0) { %>
+      <p>Aucune réservation enregistrée.</p>
+    <% } else { %>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Catway</th>
+            <th scope="col">Client</th>
+            <th scope="col">Bateau</th>
+            <th scope="col">Début</th>
+            <th scope="col">Fin</th>
+            <th scope="col">Suppression</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <% reservations.forEach((reservation) => { %>
+            <tr>
+              <td><%= reservation.catwayNumber %></td>
+              <td><%= reservation.clientName %></td>
+              <td><%= reservation.boatName %></td>
+              <td>
+                <%= reservation.startDate.toLocaleString('fr-FR', {
+                  timeZone: 'Europe/Paris'
+                }) %>
+              </td>
+              <td>
+                <%= reservation.endDate.toLocaleString('fr-FR', {
+                  timeZone: 'Europe/Paris'
+                }) %>
+              </td>
+              <td>
+  <button
+    type="button"
+    class="delete-reservation-button"
+    data-id="<%= reservation._id %>"
+    data-catway="<%= reservation.catwayNumber %>"
+  >
+    Supprimer
+  </button>
+
+  <p class="delete-message" role="status"></p>
+</td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } %>
+    <h2>Modifier une réservation</h2>
+
+<form id="edit-reservation-form">
+  <div>
+    <label for="reservation-choice">Réservation à modifier</label>
+
+    <select id="reservation-choice" name="reservationId" required>
+      <option value="">Choisir une réservation</option>
+
+      <% reservations.forEach((reservation) => { %>
+        <option
+          value="<%= reservation._id %>"
+          data-catway="<%= reservation.catwayNumber %>"
+          data-client="<%= reservation.clientName %>"
+          data-boat="<%= reservation.boatName %>"
+          data-start="<%= reservation.startDate.toISOString() %>"
+          data-end="<%= reservation.endDate.toISOString() %>"
+        >
+          Catway <%= reservation.catwayNumber %> —
+          <%= reservation.clientName %> —
+          <%= reservation.boatName %> —
+          <%= reservation.startDate.toLocaleDateString('fr-FR', {
+            timeZone: 'Europe/Paris'
+          }) %>
+        </option>
+      <% }); %>
+    </select>
+  </div>
+
+  <div>
+    <label for="edit-client">Nom du client</label>
+    <input id="edit-client" name="clientName" type="text" required>
+  </div>
+
+  <div>
+    <label for="edit-boat">Nom du bateau</label>
+    <input id="edit-boat" name="boatName" type="text" required>
+  </div>
+
+  <div>
+    <label for="edit-start">Début</label>
+    <input
+      id="edit-start"
+      name="startDate"
+      type="datetime-local"
+      step="0.001"
+      required
+    >
+  </div>
+
+  <div>
+    <label for="edit-end">Fin</label>
+    <input
+      id="edit-end"
+      name="endDate"
+      type="datetime-local"
+      step="0.001"
+      required
+    >
+  </div>
+
+  <button type="submit">Enregistrer les modifications</button>
+  <p id="edit-message" role="status"></p>
+</form>
+  </main>
+  <script>
+  const createForm = document.getElementById('create-reservation-form');
+  const createMessage = document.getElementById('create-message');
+  const createButton = createForm.querySelector('button[type="submit"]');
+
+  
+  async function createReservation(event) {
+    event.preventDefault();
+
+    createMessage.textContent = '';
+
+    const start = new Date(createForm.elements.startDate.value);
+    const end = new Date(createForm.elements.endDate.value);
+
+    if (
+      Number.isNaN(start.getTime()) ||
+      Number.isNaN(end.getTime()) ||
+      end <= start
+    ) {
+      createMessage.textContent =
+        'La date de fin doit être postérieure à la date de début.';
+      return;
+    }
+
+    createButton.disabled = true;
+
+    try {
+      const number = createForm.elements.catwayNumber.value;
+
+      const response = await fetch(`/catways/${number}/reservations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          clientName: createForm.elements.clientName.value,
+          boatName: createForm.elements.boatName.value,
+          startDate: start.toISOString(),
+          endDate: end.toISOString()
+        })
+      });
+
+      if (response.status === 401) {
+        window.location.href = '/';
+        return;
+      }
+
+      if (!response.ok) {
+        const data = await response.json();
+
+        createMessage.textContent =
+          data.message || 'Impossible de créer la réservation.';
+        return;
+      }
+
+      window.location.reload();
+    } catch (error) {
+      createMessage.textContent =
+        'Une erreur est survenue. Vérifie la connexion au serveur.';
+    } finally {
+      createButton.disabled = false;
+    }
+  }
+
+  createForm.addEventListener('submit', createReservation);
+  const editForm = document.getElementById('edit-reservation-form');
+const reservationChoice = document.getElementById('reservation-choice');
+const editMessage = document.getElementById('edit-message');
+
+
+function toLocalInput(isoDate) {
+  const date = new Date(isoDate);
+  const offset = date.getTimezoneOffset() * 60 * 1000;
+
+  return new Date(date.getTime() - offset)
+    .toISOString()
+    .slice(0, -1);
+}
+
+
+function fillReservationForm() {
+  editMessage.textContent = '';
+
+  if (!reservationChoice.value) {
+    editForm.reset();
+    return;
+  }
+
+  const selected = reservationChoice.selectedOptions[0];
+
+  editForm.elements.clientName.value = selected.dataset.client;
+  editForm.elements.boatName.value = selected.dataset.boat;
+  editForm.elements.startDate.value = toLocalInput(selected.dataset.start);
+  editForm.elements.endDate.value = toLocalInput(selected.dataset.end);
+}
+
+/**
+ * Envoie les modifications de la réservation à l'API.
+**/
+async function updateReservation(event) {
+  event.preventDefault();
+  editMessage.textContent = '';
+
+  if (!reservationChoice.value) {
+    return;
+  }
+
+  const selected = reservationChoice.selectedOptions[0];
+  const start = new Date(editForm.elements.startDate.value);
+  const end = new Date(editForm.elements.endDate.value);
+
+  if (
+    Number.isNaN(start.getTime()) ||
+    Number.isNaN(end.getTime()) ||
+    end <= start
+  ) {
+    editMessage.textContent =
+      'La date de fin doit être postérieure à la date de début.';
+    return;
+  }
+
+  const button = editForm.querySelector('button[type="submit"]');
+  button.disabled = true;
+
+  try {
+    const response = await fetch(
+      `/catways/${selected.dataset.catway}/reservations`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          idReservation: reservationChoice.value,
+          clientName: editForm.elements.clientName.value,
+          boatName: editForm.elements.boatName.value,
+          startDate: start.toISOString(),
+          endDate: end.toISOString()
+        })
+      }
+    );
+
+    if (response.status === 401) {
+      window.location.href = '/';
+      return;
+    }
+
+    if (!response.ok) {
+      const data = await response.json();
+      editMessage.textContent =
+        data.message || 'Impossible de modifier la réservation.';
+      return;
+    }
+
+    window.location.reload();
+  } catch (error) {
+    editMessage.textContent =
+      'Une erreur est survenue. Vérifie la connexion au serveur.';
+  } finally {
+    button.disabled = false;
+  }
+}
+
+reservationChoice.addEventListener('change', fillReservationForm);
+editForm.addEventListener('submit', updateReservation);
+/**
+ * Supprime une réservation après confirmation.
+ *
+ * @param {MouseEvent} event - Clic sur le bouton de suppression.
+ * @returns {Promise<void>}
+ */
+async function deleteReservation(event) {
+  const button = event.currentTarget;
+  const message = button.parentElement.querySelector('.delete-message');
+
+  if (!window.confirm('Supprimer cette réservation ?')) {
+    return;
+  }
+
+  message.textContent = '';
+  button.disabled = true;
+
+  try {
+    const response = await fetch(
+      `/catway/${button.dataset.catway}/reservations/${button.dataset.id}`,
+      {
+        method: 'DELETE'
+      }
+    );
+
+    if (response.status === 401) {
+      window.location.href = '/';
+      return;
+    }
+
+    if (!response.ok) {
+      const data = await response.json();
+
+      message.textContent =
+        data.message || 'Impossible de supprimer la réservation.';
+      return;
+    }
+
+    window.location.reload();
+  } catch (error) {
+    message.textContent =
+      'Une erreur est survenue. Vérifie la connexion au serveur.';
+  } finally {
+    button.disabled = false;
+  }
+}
+
+document.querySelectorAll('.delete-reservation-button').forEach((button) => {
+  button.addEventListener('click', deleteReservation);
+});
+</script>
+</body>
+</html>

@@ -8,11 +8,17 @@ const authRoutes = require('./routes/auth');
 const CatwayRoutes = require('./routes/catways');
 const reservationRoutes = require('./routes/reservations');
 const userRoutes = require('./routes/users');
+const path = require('path');
+const pageRoutes = require('./routes/pages');
 
 const app = express();
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
 
 //configure sessions
 app.use(session({
@@ -33,16 +39,15 @@ app.use(session({
     }
 }));
 
+app.get('/',(req,res,) => {
+    res.render('home');
+});
+
 app.use('/', authRoutes);
 app.use('/catways', CatwayRoutes);
 app.use('/', reservationRoutes);
 app.use('/users', userRoutes);
-
-
-//premiere route pour vérifier que le serveur fonctionne
-app.get('/',(req,res,) => {
-    res.send('Bienvenue au port de Plaisance de Russell');
-});
+app.use('/', pageRoutes);
 
 async function startServer(){
     try{

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Port de Russell</title>
+  </head>
+  <body>
+    <main>
+      <h1>Port de Plaisance de Russell</h1>
+      <p>
+        Bienvenue dans l’application de gestion de la capitainerie.
+        Connectez-vous pour gérer les catways, les réservations et les
+        utilisateurs.
+      </p>
+      <h2>Connexion</h2>
+      <form action="/login" method="post">
+        <div>
+          <label for="email">Adresse mail</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            autocomplete="username"
+            required
+          />
+        </div>
+        <div>
+          <label for="password">Mot de passe</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            autocomplete="current-password"
+            required
+          />
+        </div>
+        <button type="submit">Se connecter</button>
+      </form>
+      <p>
+        <a href="/documentation">Consulter la documentation de l'API</a>
+      </p>
+    </main>
+  </body>
+</html>
