@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestion des utilisateurs — Port de Russell</title>
+</head>
+<body>
+  <header>
+    <h1>Gestion des utilisateurs</h1>
+
+    <nav aria-label="Navigation">
+      <a href="/dashboard">Tableau de bord</a>
+      <a href="/logout">Se déconnecter</a>
+    </nav>
+  </header>
+
+  <main>
+    <h2>Créer un utilisateur</h2>
+
+<form id="create-user-form">
+  <div>
+    <label for="username">Nom d’utilisateur</label>
+    <input
+      type="text"
+      id="username"
+      name="username"
+      minlength="2"
+      maxlength="50"
+      required
+    >
+  </div>
+
+  <div>
+    <label for="email">Adresse email</label>
+    <input type="email" id="email" name="email" required>
+  </div>
+
+  <div>
+    <label for="password">Mot de passe</label>
+    <input
+      type="password"
+      id="password"
+      name="password"
+      minlength="8"
+      autocomplete="new-password"
+      required
+    >
+  </div>
+
+  <button type="submit">Créer l’utilisateur</button>
+  <p id="create-message" role="status"></p>
+</form>
+    <h2>Liste des utilisateurs</h2>
+
+    <% if (users.length === 0) { %>
+      <p>Aucun utilisateur enregistré.</p>
+    <% } else { %>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Nom</th>
+            <th scope="col">Email</th>
+            <th scope="col">Modification</th>
+            <th scope="col">Suppression</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <% users.forEach((user) => { %>
+            <tr>
+              <td><%= user.username %></td>
+              <td><%= user.email %></td>
+              <td>
+  <form class="edit-user-form" data-email="<%= user.email %>">
+    <div>
+      <label for="username-<%= user._id %>">Nom</label>
+      <input
+        id="username-<%= user._id %>"
+        name="username"
+        type="text"
+        value="<%= user.username %>"
+        minlength="2"
+        maxlength="50"
+        required
+      >
+    </div>
+
+    <div>
+      <label for="email-<%= user._id %>">Email</label>
+      <input
+        id="email-<%= user._id %>"
+        name="email"
+        type="email"
+        value="<%= user.email %>"
+        required
+      >
+    </div>
+
+    <div>
+      <label for="password-<%= user._id %>">
+        Nouveau mot de passe — laisser vide pour le conserver
+      </label>
+      <input
+        id="password-<%= user._id %>"
+        name="password"
+        type="password"
+        minlength="8"
+        autocomplete="new-password"
+      >
+    </div>
+
+    <button type="submit">Enregistrer</button>
+    <p class="edit-message" role="status"></p>
+  </form>
+</td>
+<td>
+  <button
+    type="button"
+    class="delete-user-button"
+    data-email="<%= user.email %>"
+  >
+    Supprimer
+  </button>
+
+  <p class="delete-message" role="status"></p>
+</td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } %>
+  </main>
+  <script>
+  const createForm = document.getElementById('create-user-form');
+  const createMessage = document.getElementById('create-message');
+  const createButton = createForm.querySelector('button[type="submit"]');
+
+  /**
+   * Envoie les informations du nouvel utilisateur à l'API.
+   */
+  async function createUser(event) {
+    event.preventDefault();
+
+    createMessage.textContent = '';
+    createButton.disabled = true;
+
+    try {
+      const response = await fetch('/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: createForm.elements.username.value,
+          email: createForm.elements.email.value,
+          password: createForm.elements.password.value
+        })
+      });
+
+      if (response.status === 401) {
+        window.location.href = '/';
+        return;
+      }
+
+      if (!response.ok) {
+        const data = await response.json();
+
+        createMessage.textContent =
+          data.message || 'Impossible de créer l’utilisateur.';
+        return;
+      }
+
+      window.location.reload();
+    } catch (error) {
+      createMessage.textContent =
+        'Une erreur est survenue. Vérifie la connexion au serveur.';
+    } finally {
+      createButton.disabled = false;
+    }
+  }
+
+  createForm.addEventListener('submit', createUser);
+  /**
+ * Envoie les modifications d'un utilisateur à l'API.
+ */
+async function updateUser(event) {
+  event.preventDefault();
+
+  const form = event.currentTarget;
+  const message = form.querySelector('.edit-message');
+  const button = form.querySelector('button[type="submit"]');
+
+  const payload = {
+    username: form.elements.username.value,
+    email: form.elements.email.value
+  };
+
+  // Un champ vide conserve le mot de passe actuel.
+  if (form.elements.password.value !== '') {
+    payload.password = form.elements.password.value;
+  }
+
+  message.textContent = '';
+  button.disabled = true;
+
+  try {
+    const response = await fetch(
+      `/users/${encodeURIComponent(form.dataset.email)}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      }
+    );
+
+    if (response.status === 401) {
+      window.location.href = '/';
+      return;
+    }
+
+    if (!response.ok) {
+      const data = await response.json();
+
+      message.textContent =
+        data.message || 'Impossible de modifier l’utilisateur.';
+      return;
+    }
+
+    window.location.reload();
+  } catch (error) {
+    message.textContent =
+      'Une erreur est survenue. Vérifie la connexion au serveur.';
+  } finally {
+    button.disabled = false;
+  }
+}
+
+document.querySelectorAll('.edit-user-form').forEach((form) => {
+  form.addEventListener('submit', updateUser);
+});
+/**
+ * Supprime un utilisateur après confirmation.
+ *
+ * @param {MouseEvent} event - Clic sur le bouton de suppression.
+ * @returns {Promise<void>}
+ */
+async function deleteUser(event) {
+  const button = event.currentTarget;
+  const email = button.dataset.email;
+  const message = button.parentElement.querySelector('.delete-message');
+
+  if (!window.confirm(`Supprimer l’utilisateur ${email} ?`)) {
+    return;
+  }
+
+  message.textContent = '';
+  button.disabled = true;
+
+  try {
+    const response = await fetch(
+      `/users/${encodeURIComponent(email)}`,
+      {
+        method: 'DELETE'
+      }
+    );
+
+    if (response.status === 401) {
+      window.location.href = '/';
+      return;
+    }
+
+    if (!response.ok) {
+      const data = await response.json();
+
+      message.textContent =
+        data.message || 'Impossible de supprimer l’utilisateur.';
+      return;
+    }
+
+    window.location.reload();
+  } catch (error) {
+    message.textContent =
+      'Une erreur est survenue. Vérifie la connexion au serveur.';
+  } finally {
+    button.disabled = false;
+  }
+}
+
+document.querySelectorAll('.delete-user-button').forEach((button) => {
+  button.addEventListener('click', deleteUser);
+});
+</script>
+</body>
+</html>

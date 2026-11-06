@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tableau de bord — Port de Russell</title>
+</head>
+<body>
+  <header>
+    <h1>Tableau de bord</h1>
+
+    <nav aria-label="Menu principal">
+      <a href="/gestion/catways">Catways</a>
+      <a href="/gestion/reservations">Réservations</a>
+      <a href="/gestion/users">Utilisateurs</a>
+      <a href="/documentation">Documentation de l’API</a>
+      <a href="/logout">Se déconnecter</a>
+    </nav>
+  </header>
+
+  <main>
+    <h2>Bienvenue, <%= user.username %></h2>
+    <p>Email : <%= user.email %></p>
+    <p>Date du jour : <%= today %></p>
+
+    <h2>Réservations en cours</h2>
+
+    <% if (reservations.length === 0) { %>
+      <p>Aucune réservation en cours.</p>
+    <% } else { %>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Catway</th>
+            <th scope="col">Client</th>
+            <th scope="col">Bateau</th>
+            <th scope="col">Début</th>
+            <th scope="col">Fin</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <% reservations.forEach((reservation) => { %>
+            <tr>
+              <td><%= reservation.catwayNumber %></td>
+              <td><%= reservation.clientName %></td>
+              <td><%= reservation.boatName %></td>
+              <td>
+                <%= reservation.startDate.toLocaleDateString('fr-FR', {
+                  timeZone: 'Europe/Paris'
+                }) %>
+              </td>
+              <td>
+                <%= reservation.endDate.toLocaleDateString('fr-FR', {
+                  timeZone: 'Europe/Paris'
+                }) %>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } %>
+  </main>
+</body>
+</html>
