@@ -6,6 +6,7 @@ const session= require('express-session');
 const {MongoStore} = require('connect-mongo');
 const authRoutes = require('./routes/auth');
 const CatwayRoutes = require('./routes/catways');
+const reservationRoutes = require('./routes/reservations');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -33,6 +34,8 @@ app.use(session({
 
 app.use('/', authRoutes);
 app.use('/catways', CatwayRoutes);
+app.use('/', reservationRoutes);
+
 
 //premiere route pour vérifier que le serveur fonctionne
 app.get('/',(req,res,) => {
