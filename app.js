@@ -1,6 +1,9 @@
 require('dotenv').config();
 
 const express = require('express');
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
 const mongoose= require('mongoose');
 const session= require('express-session');
 const {MongoStore} = require('connect-mongo');
